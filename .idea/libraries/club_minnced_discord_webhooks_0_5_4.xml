@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="club.minnced:discord-webhooks:0.5.4" type="repository">
+    <properties maven-id="club.minnced:discord-webhooks:0.5.4" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/club/minnced/discord-webhooks/0.5.4/discord-webhooks-0.5.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp/3.14.9/okhttp-3.14.9.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio/1.17.2/okio-1.17.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/json/json/20180813/json-20180813.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/16.0.1/annotations-16.0.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
