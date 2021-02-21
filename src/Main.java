@@ -104,9 +104,7 @@ public class Main {
             Date openTime = new SimpleDateFormat("HH:mm:ss").parse("09:00:00");
             Date closeTime = new SimpleDateFormat("HH:mm:ss").parse("18:00:00");
             Date currentTime = day.getTime();
-            if (currentTime.after(openTime) && currentTime.before(closeTime)) {
-                return true;
-            }
+            return currentTime.after(openTime) && currentTime.before(closeTime);
         }
         return false;
     }
@@ -117,17 +115,15 @@ public class Main {
         BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
         bw.write(String.valueOf(lastCheck));
         bw.close();
-        readFromFile();
     }
 
-    private static double readFromFile() throws IOException {
+    private static double readFromFile() {
         BufferedReader reader;
         try {
             reader = new BufferedReader(new FileReader(
                     "rem.txt"));
             String line = reader.readLine();
-            while (line != null) {
-                System.out.println(line);
+            if (line != null) {
                 return Double.parseDouble(line);
             }
             reader.close();
