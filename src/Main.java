@@ -4,14 +4,15 @@ import club.minnced.discord.webhook.send.WebhookEmbedBuilder;
 import com.bastiaanjansen.otp.TOTPGenerator;
 import com.bastiaanjansen.otp.builders.TOTPGeneratorBuilder;
 import com.github.eitraz.avanza.AvanzaApi;
-import com.github.eitraz.avanza.model.account.AccountOverview;
 import com.github.eitraz.avanza.model.account.Overview;
 
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
@@ -23,28 +24,29 @@ public class Main {
     final private static String WEBHOOK = "";
     private static double lastCheck = 0.0;
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, ParseException, IOException {
         run();
     }
 
-    private static void run() throws InterruptedException {
-        try {
-            String code = getCode();
-            AvanzaApi api = new AvanzaApi(userName, password, () -> code);
-            // Get overview
-            Overview overview = api.getOverview();
-            Double amount = overview.getTotalOwnCapital();
-            prepareMessage(amount);
-            // Get details about all accounts
-            overview.getAccounts().forEach(account -> {
-                AccountOverview accountOverview = api.getAccountOverview(account.getAccountId());
-                System.out.println("Total Capital: " + accountOverview.getTotalProfit());
-            });
-            TimeUnit.SECONDS.sleep(20);
-            run();
-        } catch (RuntimeException | UnsupportedEncodingException | URISyntaxException ignored) {
-            TimeUnit.SECONDS.sleep(10);
-            run();
+    private static void run() throws InterruptedException, ParseException, IOException {
+        if (checkDay()) {
+            try {
+                lastCheck = readFromFile();
+                String code = getCode();
+                AvanzaApi api = new AvanzaApi(userName, password, () -> code);
+                // Get overview
+                Overview overview = api.getOverview();
+                Double amount = overview.getTotalOwnCapital();
+                prepareMessage(amount);
+                TimeUnit.MINUTES.sleep(5); //Timer for how often it runs
+                run();
+            } catch (RuntimeException | UnsupportedEncodingException | URISyntaxException ignored) {
+                TimeUnit.SECONDS.sleep(10); //Exception = retry in x seconds
+                run();
+            }
+        } else {
+            writeToFile(lastCheck);
+            TimeUnit.MINUTES.sleep(30);
         }
     }
 
@@ -93,5 +95,45 @@ public class Main {
                 .build();
         client.send(embed);
         lastCheck = amount;
+    }
+
+    private static boolean checkDay() throws ParseException { //Check time and day
+        Calendar day = Calendar.getInstance();
+        if (!(day.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY) ||
+                !(day.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY)) {
+            Date openTime = new SimpleDateFormat("HH:mm:ss").parse("09:00:00");
+            Date closeTime = new SimpleDateFormat("HH:mm:ss").parse("18:00:00");
+            Date currentTime = day.getTime();
+            if (currentTime.after(openTime) && currentTime.before(closeTime)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void writeToFile(double lastCheck) throws IOException {
+        File fout = new File("rem.txt");
+        FileOutputStream fos = new FileOutputStream(fout);
+        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
+        bw.write(String.valueOf(lastCheck));
+        bw.close();
+        readFromFile();
+    }
+
+    private static double readFromFile() throws IOException {
+        BufferedReader reader;
+        try {
+            reader = new BufferedReader(new FileReader(
+                    "rem.txt"));
+            String line = reader.readLine();
+            while (line != null) {
+                System.out.println(line);
+                return Double.parseDouble(line);
+            }
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return 0.0;
     }
 }
