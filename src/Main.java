@@ -10,7 +10,6 @@ import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DecimalFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -24,11 +23,11 @@ public class Main {
     final private static String WEBHOOK = "";
     private static double lastCheck = 0.0;
 
-    public static void main(String[] args) throws InterruptedException, ParseException, IOException {
+    public static void main(String[] args) throws InterruptedException, IOException {
         run();
     }
 
-    private static void run() throws InterruptedException, ParseException, IOException {
+    private static void run() throws InterruptedException, IOException {
         if (checkDay()) {
             try {
                 lastCheck = readFromFile();
@@ -38,16 +37,15 @@ public class Main {
                 Overview overview = api.getOverview();
                 Double amount = overview.getTotalOwnCapital();
                 prepareMessage(amount);
+                writeToFile(amount);
                 TimeUnit.MINUTES.sleep(5); //Timer for how often it runs
                 run();
             } catch (RuntimeException | UnsupportedEncodingException | URISyntaxException ignored) {
                 TimeUnit.SECONDS.sleep(10); //Exception = retry in x seconds
                 run();
             }
-        } else {
-            writeToFile(lastCheck);
-            TimeUnit.MINUTES.sleep(30);
-        }
+        } else
+            TimeUnit.MINUTES.sleep(5);
     }
 
     private static String getCode() throws UnsupportedEncodingException, URISyntaxException {
@@ -60,27 +58,25 @@ public class Main {
     private static void prepareMessage(Double amount) {
         if (lastCheck == 0.0) {
             int color = 0x808080; //Gray, used for first start
-            String percent = "```diff\n" +
-                    "+" + "0.0" + "%" + "```";
-            sendMessage(amount, color, percent);
+            String prefix = "+";
+            String percent = "0.00";
+            sendMessage(amount, color, percent, prefix);
         } else if (lastCheck > amount) {
             int color = 0xFF0000; //Red, if past value > current
             double decrease = lastCheck - amount;
             String percent = String.valueOf(decrease / amount * 100);
-            percent = "```diff\n" +
-                    "-" + percent + "%" + "```";
-            sendMessage(amount, color, percent);
+            String prefix = "-";
+            sendMessage(amount, color, percent, prefix);
         } else if (lastCheck < amount) {
             int color = 0x7cfc00; //Green, if past value < current
             double increase = amount - lastCheck;
             String percent = String.valueOf(increase / amount * 100);
-            percent = "```diff\n" +
-                    "+" + percent + "%" + "```";
-            sendMessage(amount, color, percent);
+            String prefix = "+";
+            sendMessage(amount, color, percent, prefix);
         }
     }
 
-    private static void sendMessage(double amount, int color, String percent) {
+    private static void sendMessage(double amount, int color, String percent, String prefix) {
         WebhookClient client = WebhookClient.withUrl(WEBHOOK); // or withId(id, token)
         // Send and log (using embed)
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss");
@@ -88,23 +84,26 @@ public class Main {
         String finalAmount;
         DecimalFormat betterFormat = new DecimalFormat("#,###.##");
         finalAmount = betterFormat.format(amount);
+        String message = "```diff\n" + prefix + percent + "%" + "```";
         WebhookEmbed embed = new WebhookEmbedBuilder()
                 .setColor(color)
                 .setDescription(formatter.format(date) + "\n\n" + "**" + "Total balance: " + finalAmount + "**" +
-                        "\n\n" + "% Change since last check: " + percent)
+                        "\n\n" + "% Change since last check: " + message)
                 .build();
         client.send(embed);
         lastCheck = amount;
     }
 
-    private static boolean checkDay() throws ParseException { //Check time and day
+    @SuppressWarnings("deprecation")
+    private static boolean checkDay() { //Check time and day
         Calendar day = Calendar.getInstance();
         if (!(day.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY) ||
                 !(day.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY)) {
-            Date openTime = new SimpleDateFormat("HH:mm:ss").parse("09:00:00");
-            Date closeTime = new SimpleDateFormat("HH:mm:ss").parse("18:00:00");
-            Date currentTime = day.getTime();
-            return currentTime.after(openTime) && currentTime.before(closeTime);
+            int currentTime = new Date().getHours();
+            int startTime = 8;
+            int endTime = 22;
+
+            return currentTime > startTime & currentTime < endTime;
         }
         return false;
     }
