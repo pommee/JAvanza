@@ -13,8 +13,7 @@ To be able to send requests to Avanza your secret key will be needed. And userna
 
 
 
-Libraries used...
-
+## Libraries
 
 ```bash
 <dependency>
