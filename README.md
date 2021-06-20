@@ -16,19 +16,21 @@ To be able to send requests to Avanza your secret key will be needed. And userna
 Libraries used...
 
 
-```
+```bash
 <dependency>
     <groupId>club.minnced</groupId>
     <artifactId>discord-webhooks</artifactId>
     <version>0.5.4-rc</version>
 </dependency>
-
+```
+```bash
 <dependency>
     <groupId>com.github.bastiaanjansen</groupId>
     <artifactId>otp-java</artifactId>
     <version>1.1.1</version>
 </dependency>
-
+```
+```bash
 <dependency>
     <groupId>com.github.eitraz</groupId>
     <artifactId>avanza-api</artifactId>
